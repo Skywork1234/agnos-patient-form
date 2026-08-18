@@ -1,69 +1,91 @@
-import Image from "next/image";
+"use client";
+
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 export default function Home() {
+  const [newSessionId, setNewSessionId] = useState<string | null>(null);
+  const [joinId, setJoinId] = useState("");
+  const trimmedJoinId = joinId.trim();
+
+  useEffect(() => {
+    setNewSessionId(uuidv4());
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="flex flex-1 flex-col items-center justify-center gap-8 p-6">
+      <div className="w-full max-w-md space-y-6">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-semibold text-slate-900">Agnos Patient Intake</h1>
+          <p className="text-sm text-slate-500">
+            สร้าง session ใหม่ แล้วเปิด Patient Form กับ Staff View คนละแท็บเพื่อดูข้อมูล sync แบบ real-time
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+          <h2 className="text-sm font-medium text-slate-700">Session ใหม่</h2>
+          <p className="break-all text-xs text-slate-400">ID: {newSessionId ?? "กำลังสร้าง..."}</p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href={newSessionId ? `/patient/${newSessionId}` : "#"}
+              aria-disabled={!newSessionId}
+              className={`flex-1 rounded-lg px-4 py-2 text-center text-sm font-medium ${
+                newSessionId
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "pointer-events-none bg-slate-100 text-slate-400"
+              }`}
+            >
+              เปิด Patient Form
+            </Link>
+            <Link
+              href={newSessionId ? `/staff/${newSessionId}` : "#"}
+              aria-disabled={!newSessionId}
+              className={`flex-1 rounded-lg border px-4 py-2 text-center text-sm font-medium ${
+                newSessionId
+                  ? "border-slate-300 text-slate-700 hover:bg-slate-50"
+                  : "pointer-events-none border-slate-200 text-slate-300"
+              }`}
+            >
+              เปิด Staff View
+            </Link>
+          </div>
         </div>
-      </main>
-    </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+          <h2 className="text-sm font-medium text-slate-700">เข้าร่วม session เดิม</h2>
+          <input
+            value={joinId}
+            onChange={(e) => setJoinId(e.target.value)}
+            placeholder="วาง session id ที่นี่"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+          />
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              href={trimmedJoinId ? `/patient/${trimmedJoinId}` : "#"}
+              aria-disabled={!trimmedJoinId}
+              className={`flex-1 rounded-lg px-4 py-2 text-center text-sm font-medium ${
+                trimmedJoinId
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "pointer-events-none bg-slate-100 text-slate-400"
+              }`}
+            >
+              เปิด Patient Form
+            </Link>
+            <Link
+              href={trimmedJoinId ? `/staff/${trimmedJoinId}` : "#"}
+              aria-disabled={!trimmedJoinId}
+              className={`flex-1 rounded-lg border px-4 py-2 text-center text-sm font-medium ${
+                trimmedJoinId
+                  ? "border-slate-300 text-slate-700 hover:bg-slate-50"
+                  : "pointer-events-none border-slate-200 text-slate-300"
+              }`}
+            >
+              เปิด Staff View
+            </Link>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }

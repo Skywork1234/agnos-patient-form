@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Agnos Patient Intake — Patient Form + Staff View
+
+Real-time patient intake form with a live staff monitoring view, built for the
+Agnos front-end developer candidate assignment.
+
+- **Patient Form** — responsive form for patients to enter their details.
+- **Staff View** — real-time, read-only view of the same session, updating as
+  the patient types.
+
+Both views connect to the same server-side session (keyed by `sessionId`) over
+a WebSocket, so anything a patient types shows up on the staff view instantly.
+
+## Tech Stack
+
+- [Next.js](https://nextjs.org) (App Router) + TypeScript
+- [TailwindCSS](https://tailwindcss.com)
+- [Socket.io](https://socket.io) for real-time sync, on a small custom Node
+  server (`server.ts`) wrapping the Next.js request handler
+- [react-hook-form](https://react-hook-form.com) + [zod](https://zod.dev) for
+  form state and validation
+
+## Why a custom server?
+
+Socket.io needs a long-lived HTTP server to upgrade connections to
+WebSockets. Next.js's default `next dev` / `next start` process supports this
+fine, but fully serverless hosts (e.g. Vercel's default deployment) don't keep
+a persistent process around, so WebSocket connections would drop. This project
+uses a custom server (`server.ts`) and is deployed to a host that runs a
+persistent Node process (Render/Railway), instead of Vercel.
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). It generates a new
+session and gives you two links:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Patient Form** (`/patient/[sessionId]`)
+- **Staff View** (`/staff/[sessionId]`)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open both (e.g. one normal window + one incognito window, or two browsers) and
+start typing in the Patient Form — the Staff View updates live.
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` — start the custom dev server (`tsx server.ts`)
+- `npm run build` — production build (`next build`)
+- `npm run start` — start the custom server in production mode
+- `npm run lint` — lint
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Features
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- All patient fields from the spec (required + optional), with validation
+  (required fields, email/phone format) via zod.
+- Responsive layout for both Patient Form and Staff View (mobile card layout,
+  wider layout on desktop).
+- Real-time sync over Socket.io, debounced (300ms) so we don't flood the
+  socket on every keystroke.
+- Presence/status indicator on the Staff View:
+  - **รอผู้ป่วยเริ่มกรอก** (waiting) — no data yet.
+  - **กำลังกรอกข้อมูล** (filling) — patient is actively typing.
+  - **ไม่มีการเคลื่อนไหว** (inactive) — no input for 10+ seconds.
+  - **ส่งข้อมูลแล้ว** (submitted) — patient submitted the form.
 
-## Deploy on Vercel
+### Bonus features implemented
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Join existing session** on the landing page — paste a `sessionId` to open
+  its Patient Form / Staff View, so a staff member can re-open a session
+  without needing a shared link stored elsewhere.
+- **Inactivity detection** (not just filling/submitted) — the Staff View can
+  tell the difference between "patient is actively typing" and "patient
+  opened the form but stepped away."
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment
+
+Deploy target: a host that runs a persistent Node process (this repo includes
+`render.yaml` for [Render](https://render.com); Railway works the same way —
+build command `npm install && npm run build`, start command `npm run start`).
+
+1. Push this repo to GitHub.
+2. On Render: **New +** → **Web Service** → connect the repo. Render will pick
+   up `render.yaml` automatically (or set build/start commands manually as
+   above).
+3. Once deployed, the same `sessionId` URL scheme (`/patient/<id>`,
+   `/staff/<id>`) works over the public URL.
+
+## Project Structure
+
+See [`docs/development-plan.md`](docs/development-plan.md) for the full
+project structure, design decisions, component architecture, and real-time
+sync flow.
