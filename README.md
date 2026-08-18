@@ -95,6 +95,10 @@ copying required.
 
 ## Deployment
 
+See [`DEPLOY.md`](DEPLOY.md) for step-by-step first-time setup and
+day-to-day deploy instructions (including how to trigger a deploy on the
+current service, which isn't yet wired for auto-deploy-on-push).
+
 Deploy target: a host that runs a persistent Node process (this repo includes
 `render.yaml` for [Render](https://render.com); Railway works the same way —
 build command `npm install && npm run build`, start command `npm run start`).
