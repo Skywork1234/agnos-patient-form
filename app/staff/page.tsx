@@ -39,6 +39,10 @@ export default function StaffDashboard() {
   return (
     <main className="flex-1 p-4 sm:p-8">
       <div className="mx-auto max-w-3xl space-y-4">
+        <Link href="/" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+          ← กลับหน้าแรก
+        </Link>
+
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Staff Dashboard</h1>
           <p className="text-sm text-slate-500">รายชื่อผู้ป่วยที่กำลังกรอกฟอร์มแบบเรียลไทม์</p>

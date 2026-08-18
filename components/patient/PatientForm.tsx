@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -119,13 +120,18 @@ export default function PatientForm({ sessionId }: { sessionId: string }) {
               ขอบคุณค่ะ เจ้าหน้าที่ได้รับข้อมูลของคุณแล้ว กรุณารอเรียกคิว
             </p>
           </div>
-          <button
-            type="button"
-            onClick={startNewPatient}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            เริ่มฟอร์มผู้ป่วยรายใหม่
-          </button>
+          <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={startNewPatient}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              เริ่มฟอร์มผู้ป่วยรายใหม่
+            </button>
+            <Link href="/" className="text-sm text-blue-600 hover:underline">
+              ← กลับหน้าแรก
+            </Link>
+          </div>
         </div>
       </main>
     );
@@ -133,9 +139,14 @@ export default function PatientForm({ sessionId }: { sessionId: string }) {
 
   return (
     <main className="flex-1 p-4 sm:p-8">
+      <div className="mx-auto max-w-3xl">
+        <Link href="/" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+          ← กลับหน้าแรก
+        </Link>
+      </div>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="mx-auto max-w-3xl space-y-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
+        className="mx-auto mt-3 max-w-3xl space-y-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
       >
         <div>
           <h1 className="text-xl font-semibold text-slate-900">แบบฟอร์มข้อมูลผู้ป่วย</h1>
