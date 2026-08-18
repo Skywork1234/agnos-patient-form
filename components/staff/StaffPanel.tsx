@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getSocket } from "@/lib/socket-client";
 import { SOCKET_EVENTS, type PatientData, type SessionState } from "@/lib/types";
@@ -40,6 +41,10 @@ export default function StaffPanel({ sessionId }: { sessionId: string }) {
   return (
     <main className="flex-1 p-4 sm:p-8">
       <div className="mx-auto max-w-3xl space-y-4">
+        <Link href="/staff" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+          ← กลับไปรายชื่อผู้ป่วย
+        </Link>
+
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl font-semibold text-slate-900">Staff View</h1>

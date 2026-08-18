@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -9,7 +10,8 @@ import {
   type PatientFormValues,
 } from "@/lib/schema";
 import { getSocket } from "@/lib/socket-client";
-import { SOCKET_EVENTS } from "@/lib/types";
+import { SOCKET_EVENTS, type SessionState } from "@/lib/types";
+import { LAST_PATIENT_SESSION_KEY } from "@/lib/session-storage";
 import FormField from "./FormField";
 
 const INACTIVITY_MS = 10000;
@@ -19,10 +21,12 @@ const inputClass =
   "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500";
 
 export default function PatientForm({ sessionId }: { sessionId: string }) {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm<PatientFormValues>({
     resolver: zodResolver(patientFormSchema),
@@ -31,19 +35,41 @@ export default function PatientForm({ sessionId }: { sessionId: string }) {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [ready, setReady] = useState(false);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inactivityTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    setReady(false);
     const socket = getSocket();
     socket.emit(SOCKET_EVENTS.JOIN, { sessionId, role: "patient" });
-  }, [sessionId]);
+    localStorage.setItem(LAST_PATIENT_SESSION_KEY, sessionId);
+
+    const onSync = (state: SessionState) => {
+      if (state.status === "submitted") {
+        setSubmitted(true);
+        setReady(true);
+        return;
+      }
+      if (Object.keys(state.data).length > 0) {
+        reset({ ...patientFormDefaults, ...state.data });
+      }
+      setReady(true);
+    };
+    socket.on(SOCKET_EVENTS.PATIENT_SYNC, onSync);
+    // Fallback in case the sync response never arrives (e.g. dropped connection).
+    const readyFallback = setTimeout(() => setReady(true), 3000);
+    return () => {
+      socket.off(SOCKET_EVENTS.PATIENT_SYNC, onSync);
+      clearTimeout(readyFallback);
+    };
+  }, [sessionId, reset]);
 
   const values = watch();
   const serialized = JSON.stringify(values);
 
   useEffect(() => {
-    if (submitted) return;
+    if (submitted || !ready) return;
     const socket = getSocket();
     const data = JSON.parse(serialized) as PatientFormValues;
 
@@ -61,7 +87,7 @@ export default function PatientForm({ sessionId }: { sessionId: string }) {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     };
-  }, [serialized, sessionId, submitted]);
+  }, [serialized, sessionId, submitted, ready]);
 
   const onSubmit = (data: PatientFormValues) => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
@@ -70,14 +96,36 @@ export default function PatientForm({ sessionId }: { sessionId: string }) {
     setSubmitted(true);
   };
 
+  const startNewPatient = () => {
+    localStorage.removeItem(LAST_PATIENT_SESSION_KEY);
+    router.push("/patient");
+  };
+
+  if (!ready) {
+    return (
+      <main className="flex flex-1 items-center justify-center p-6">
+        <p className="text-sm text-slate-400">กำลังเตรียมฟอร์ม...</p>
+      </main>
+    );
+  }
+
   if (submitted) {
     return (
       <main className="flex flex-1 flex-col items-center justify-center p-6 text-center">
-        <div className="max-w-sm space-y-2">
-          <h1 className="text-xl font-semibold text-slate-900">ส่งข้อมูลเรียบร้อยแล้ว</h1>
-          <p className="text-sm text-slate-500">
-            ขอบคุณค่ะ เจ้าหน้าที่ได้รับข้อมูลของคุณแล้ว กรุณารอเรียกคิว
-          </p>
+        <div className="max-w-sm space-y-4">
+          <div className="space-y-2">
+            <h1 className="text-xl font-semibold text-slate-900">ส่งข้อมูลเรียบร้อยแล้ว</h1>
+            <p className="text-sm text-slate-500">
+              ขอบคุณค่ะ เจ้าหน้าที่ได้รับข้อมูลของคุณแล้ว กรุณารอเรียกคิว
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={startNewPatient}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            เริ่มฟอร์มผู้ป่วยรายใหม่
+          </button>
         </div>
       </main>
     );

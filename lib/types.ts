@@ -1,4 +1,5 @@
 export type PresenceStatus = "filling" | "inactive" | "submitted";
+export type DisplayStatus = "waiting" | PresenceStatus;
 
 export interface PatientData {
   firstName: string;
@@ -17,8 +18,16 @@ export interface PatientData {
 }
 
 export interface SessionState {
+  sessionId: string;
   data: Partial<PatientData>;
   status: PresenceStatus;
+  updatedAt: number;
+}
+
+export interface SessionSummary {
+  sessionId: string;
+  displayName: string;
+  status: DisplayStatus;
   updatedAt: number;
 }
 
@@ -27,6 +36,9 @@ export const SOCKET_EVENTS = {
   PATIENT_UPDATE: "patient:update",
   PATIENT_SUBMIT: "patient:submit",
   STAFF_SYNC: "staff:sync",
+  PATIENT_SYNC: "patient:sync",
+  LOBBY_JOIN: "lobby:join",
+  LOBBY_SYNC: "lobby:sync",
 } as const;
 
 export interface PatientUpdatePayload {

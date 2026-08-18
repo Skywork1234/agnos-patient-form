@@ -1,4 +1,6 @@
-export type StaffStatus = "waiting" | "filling" | "inactive" | "submitted";
+import type { DisplayStatus } from "@/lib/types";
+
+export type StaffStatus = DisplayStatus;
 
 const CONFIG: Record<StaffStatus, { label: string; className: string; pulse?: boolean }> = {
   waiting: { label: "รอผู้ป่วยเริ่มกรอก", className: "bg-slate-100 text-slate-500" },

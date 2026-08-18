@@ -9,12 +9,15 @@ Agnos front-end developer candidate assignment.
 > Hosted on Render's free tier, which sleeps after ~15 minutes of
 > inactivity — the first request after a sleep can take 30-60s to wake up.
 
-- **Patient Form** — responsive form for patients to enter their details.
-- **Staff View** — real-time, read-only view of the same session, updating as
-  the patient types.
+- **Patient Form** (`/patient`) — responsive form for patients to enter their
+  details. Each device/browser gets its own session automatically — no ID to
+  create or remember.
+- **Staff Dashboard** (`/staff`) — real-time list of every patient currently
+  filling out a form; click any row to see that patient's data update live.
 
-Both views connect to the same server-side session (keyed by `sessionId`) over
-a WebSocket, so anything a patient types shows up on the staff view instantly.
+Both sides connect over a WebSocket to the same server-side session store, so
+anything a patient types shows up on staff's screen instantly — without staff
+ever having to type or paste a session ID.
 
 ## Tech Stack
 
@@ -41,14 +44,18 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). It generates a new
-session and gives you two links:
+Open [http://localhost:3000](http://localhost:3000) and pick a role:
 
-- **Patient Form** (`/patient/[sessionId]`)
-- **Staff View** (`/staff/[sessionId]`)
+- **"ฉันเป็นผู้ป่วย" (Patient)** → `/patient` auto-creates a session and takes
+  you straight to the form.
+- **"ฉันเป็นเจ้าหน้าที่" (Staff)** → `/staff` shows a live dashboard of every
+  patient currently filling out a form.
 
-Open both (e.g. one normal window + one incognito window, or two browsers) and
-start typing in the Patient Form — the Staff View updates live.
+Open the patient link in one window/browser and the staff dashboard in
+another (they're two different roles/devices in real use — a patient's own
+tablet vs. the front-desk screen) and start typing in the Patient Form — a
+row appears on the dashboard immediately and updates live as you type, no ID
+copying required.
 
 ## Scripts
 
@@ -73,9 +80,15 @@ start typing in the Patient Form — the Staff View updates live.
 
 ### Bonus features implemented
 
-- **Join existing session** on the landing page — paste a `sessionId` to open
-  its Patient Form / Staff View, so a staff member can re-open a session
-  without needing a shared link stored elsewhere.
+- **Staff Dashboard** (`/staff`) — a live list of every active/recent patient
+  session, not just a single hardcoded one. This is what lets staff reach any
+  patient's data without ever handling a session ID, and models a real
+  clinic where multiple patients queue up at once.
+- **Session resume** — a patient's in-progress session is remembered
+  (`localStorage`) per device, so navigating away and back to `/patient`
+  resumes the same form instead of losing it or starting a blank duplicate.
+  An explicit "เริ่มฟอร์มผู้ป่วยรายใหม่" button on the post-submit screen clears
+  this for the next patient on a shared kiosk.
 - **Inactivity detection** (not just filling/submitted) — the Staff View can
   tell the difference between "patient is actively typing" and "patient
   opened the form but stepped away."
