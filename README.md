@@ -3,6 +3,12 @@
 Real-time patient intake form with a live staff monitoring view, built for the
 Agnos front-end developer candidate assignment.
 
+**Live app:** https://agnos-patient-form-50hy.onrender.com
+**Repo:** https://github.com/Skywork1234/agnos-patient-form
+
+> Hosted on Render's free tier, which sleeps after ~15 minutes of
+> inactivity — the first request after a sleep can take 30-60s to wake up.
+
 - **Patient Form** — responsive form for patients to enter their details.
 - **Staff View** — real-time, read-only view of the same session, updating as
   the patient types.
