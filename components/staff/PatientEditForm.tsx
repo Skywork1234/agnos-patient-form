@@ -11,8 +11,7 @@ import { getSocket } from "@/lib/socket-client";
 import { SOCKET_EVENTS, type PatientData } from "@/lib/types";
 import FormField from "@/components/patient/FormField";
 
-const inputClass =
-  "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500";
+const inputClass = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500";
 
 export default function PatientEditForm({
   sessionId,

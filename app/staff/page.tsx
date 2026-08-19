@@ -3,8 +3,17 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getSocket } from "@/lib/socket-client";
-import { SOCKET_EVENTS, type SessionSummary } from "@/lib/types";
-import StatusBadge from "@/components/staff/StatusBadge";
+import { SOCKET_EVENTS, type DisplayStatus, type SessionSummary } from "@/lib/types";
+import StatusBadge, { CONFIG } from "@/components/staff/StatusBadge";
+
+type StatusFilter = "all" | DisplayStatus;
+
+const FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: "all", label: "ทั้งหมด" },
+  ...(Object.entries(CONFIG) as [DisplayStatus, (typeof CONFIG)[DisplayStatus]][]).map(
+    ([value, config]) => ({ value, label: config.label })
+  ),
+];
 
 function formatRelativeTime(updatedAt: number): string {
   const seconds = Math.max(0, Math.floor((Date.now() - updatedAt) / 1000));
@@ -18,6 +27,17 @@ function formatRelativeTime(updatedAt: number): string {
 
 export default function StaffDashboard() {
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+
+  const filteredSessions = sessions.filter(
+    (session) =>
+      session.displayName.toLowerCase().includes(search.trim().toLowerCase()) &&
+      (statusFilter === "all" || session.status === statusFilter)
+  );
+
+  const countFor = (value: StatusFilter) =>
+    value === "all" ? sessions.length : sessions.filter((s) => s.status === value).length;
 
   const handleDelete = (sessionId: string, displayName: string) => {
     if (!window.confirm(`ยืนยันการลบข้อมูลของ "${displayName}" ใช่หรือไม่? การลบไม่สามารถย้อนกลับได้`)) return;
@@ -53,13 +73,45 @@ export default function StaffDashboard() {
           <p className="text-sm text-slate-500">รายชื่อผู้ป่วยที่กำลังกรอกฟอร์มแบบเรียลไทม์</p>
         </div>
 
+        {sessions.length > 0 && (
+          <>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="ค้นหาชื่อผู้ป่วย..."
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+            />
+            <div className="flex flex-wrap gap-2">
+              {FILTER_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setStatusFilter(option.value)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                    statusFilter === option.value
+                      ? "bg-blue-600 text-white"
+                      : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  {option.label} ({countFor(option.value)})
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
         {sessions.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-400">
             ยังไม่มีผู้ป่วยกำลังกรอกฟอร์ม
           </div>
+        ) : filteredSessions.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-400">
+            ไม่พบผู้ป่วยที่ตรงกับเงื่อนไขที่เลือก
+          </div>
         ) : (
           <ul className="space-y-2">
-            {sessions.map((session) => (
+            {filteredSessions.map((session) => (
               <li key={session.sessionId} className="flex items-center gap-2">
                 <Link
                   href={`/staff/${session.sessionId}`}

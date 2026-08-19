@@ -2,7 +2,7 @@ import type { DisplayStatus } from "@/lib/types";
 
 export type StaffStatus = DisplayStatus;
 
-const CONFIG: Record<StaffStatus, { label: string; className: string; pulse?: boolean }> = {
+export const CONFIG: Record<StaffStatus, { label: string; className: string; pulse?: boolean }> = {
   waiting: { label: "รอผู้ป่วยเริ่มกรอก", className: "bg-slate-100 text-slate-500" },
   filling: { label: "กำลังกรอกข้อมูล", className: "bg-amber-100 text-amber-700", pulse: true },
   inactive: { label: "ไม่มีการเคลื่อนไหว", className: "bg-slate-200 text-slate-600" },
