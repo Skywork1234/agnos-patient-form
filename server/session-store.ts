@@ -38,6 +38,22 @@ export function updateSession(
   return next;
 }
 
+// ต่างจาก updateSession ตรงที่ "ไม่แตะ" status เดิม — ใช้ตอน staff แก้ไขข้อมูล
+// เพื่อไม่ให้ record ที่ submitted แล้วถูกเปลี่ยนกลับเป็น filling/inactive โดยไม่ตั้งใจ
+export function updateSessionData(
+  sessionId: string,
+  data: Partial<PatientData>
+): SessionState {
+  const existing = getSession(sessionId);
+  const next: SessionState = { ...existing, data, updatedAt: Date.now() };
+  sessions.set(sessionId, next);
+  return next;
+}
+
+export function deleteSession(sessionId: string): boolean {
+  return sessions.delete(sessionId);
+}
+
 export function listSessions(): SessionSummary[] {
   return Array.from(sessions.values())
     .map((session) => ({

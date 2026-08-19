@@ -39,6 +39,8 @@ export const SOCKET_EVENTS = {
   PATIENT_SYNC: "patient:sync",
   LOBBY_JOIN: "lobby:join",
   LOBBY_SYNC: "lobby:sync",
+  STAFF_UPDATE: "staff:update",
+  STAFF_DELETE: "staff:delete",
 } as const;
 
 export interface PatientUpdatePayload {
@@ -50,4 +52,13 @@ export interface PatientUpdatePayload {
 export interface JoinPayload {
   sessionId: string;
   role: "patient" | "staff";
+}
+
+export interface StaffUpdatePayload {
+  sessionId: string;
+  data: Partial<PatientData>;
+}
+
+export interface StaffDeletePayload {
+  sessionId: string;
 }

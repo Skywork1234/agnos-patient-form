@@ -1,8 +1,21 @@
 import { createServer } from "http";
 import next from "next";
 import { Server } from "socket.io";
-import { SOCKET_EVENTS, type JoinPayload, type PatientUpdatePayload } from "./lib/types";
-import { ensureSession, getSession, listSessions, updateSession } from "./server/session-store";
+import {
+  SOCKET_EVENTS,
+  type JoinPayload,
+  type PatientUpdatePayload,
+  type StaffDeletePayload,
+  type StaffUpdatePayload,
+} from "./lib/types";
+import {
+  deleteSession,
+  ensureSession,
+  getSession,
+  listSessions,
+  updateSession,
+  updateSessionData,
+} from "./server/session-store";
 
 const LOBBY_ROOM = "lobby";
 
@@ -43,6 +56,18 @@ app.prepare().then(() => {
     socket.on(SOCKET_EVENTS.PATIENT_SUBMIT, ({ sessionId, data }: PatientUpdatePayload) => {
       const state = updateSession(sessionId, data, "submitted");
       io.to(sessionId).emit(SOCKET_EVENTS.STAFF_SYNC, state);
+      broadcastLobby();
+    });
+
+    socket.on(SOCKET_EVENTS.STAFF_UPDATE, ({ sessionId, data }: StaffUpdatePayload) => {
+      const state = updateSessionData(sessionId, data);
+      io.to(sessionId).emit(SOCKET_EVENTS.STAFF_SYNC, state);
+      broadcastLobby();
+    });
+
+    socket.on(SOCKET_EVENTS.STAFF_DELETE, ({ sessionId }: StaffDeletePayload) => {
+      deleteSession(sessionId);
+      io.to(sessionId).emit(SOCKET_EVENTS.STAFF_SYNC, null);
       broadcastLobby();
     });
   });

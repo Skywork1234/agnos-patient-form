@@ -19,6 +19,11 @@ function formatRelativeTime(updatedAt: number): string {
 export default function StaffDashboard() {
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
 
+  const handleDelete = (sessionId: string, displayName: string) => {
+    if (!window.confirm(`ยืนยันการลบข้อมูลของ "${displayName}" ใช่หรือไม่? การลบไม่สามารถย้อนกลับได้`)) return;
+    getSocket().emit(SOCKET_EVENTS.STAFF_DELETE, { sessionId });
+  };
+
   useEffect(() => {
     const socket = getSocket();
     socket.emit(SOCKET_EVENTS.LOBBY_JOIN);
@@ -55,10 +60,10 @@ export default function StaffDashboard() {
         ) : (
           <ul className="space-y-2">
             {sessions.map((session) => (
-              <li key={session.sessionId}>
+              <li key={session.sessionId} className="flex items-center gap-2">
                 <Link
                   href={`/staff/${session.sessionId}`}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:border-blue-300 hover:bg-blue-50/40 sm:px-6"
+                  className="flex flex-1 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:border-blue-300 hover:bg-blue-50/40 sm:px-6"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-slate-900">{session.displayName}</p>
@@ -66,6 +71,20 @@ export default function StaffDashboard() {
                   </div>
                   <StatusBadge status={session.status} />
                 </Link>
+                <Link
+                  href={`/staff/${session.sessionId}?edit=1`}
+                  className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  แก้ไข
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(session.sessionId, session.displayName)}
+                  className="shrink-0 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50"
+                  aria-label={`ลบ ${session.displayName}`}
+                >
+                  ลบ
+                </button>
               </li>
             ))}
           </ul>
