@@ -64,7 +64,7 @@ export default function StaffDashboard() {
   return (
     <main className="flex-1 p-4 sm:p-8">
       <div className="mx-auto max-w-3xl space-y-4">
-        <Link href="/" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+        <Link href="/" className="inline-flex items-center gap-1 text-sm text-blue-600 transition-colors hover:underline">
           ← กลับหน้าแรก
         </Link>
 
@@ -80,7 +80,7 @@ export default function StaffDashboard() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="ค้นหาชื่อผู้ป่วย..."
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500"
             />
             <div className="flex flex-wrap gap-2">
               {FILTER_OPTIONS.map((option) => (
@@ -88,7 +88,7 @@ export default function StaffDashboard() {
                   key={option.value}
                   type="button"
                   onClick={() => setStatusFilter(option.value)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium ${
+                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                     statusFilter === option.value
                       ? "bg-blue-600 text-white"
                       : "border border-slate-300 text-slate-700 hover:bg-slate-50"
@@ -115,7 +115,7 @@ export default function StaffDashboard() {
               <li key={session.sessionId} className="flex items-center gap-2">
                 <Link
                   href={`/staff/${session.sessionId}`}
-                  className="flex flex-1 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:border-blue-300 hover:bg-blue-50/40 sm:px-6"
+                  className="flex flex-1 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-50/40 hover:shadow-md sm:px-6"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-slate-900">{session.displayName}</p>
@@ -125,14 +125,14 @@ export default function StaffDashboard() {
                 </Link>
                 <Link
                   href={`/staff/${session.sessionId}?edit=1`}
-                  className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
                 >
                   แก้ไข
                 </Link>
                 <button
                   type="button"
                   onClick={() => handleDelete(session.sessionId, session.displayName)}
-                  className="shrink-0 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50"
+                  className="shrink-0 rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
                   aria-label={`ลบ ${session.displayName}`}
                 >
                   ลบ

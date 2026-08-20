@@ -11,7 +11,7 @@ import { getSocket } from "@/lib/socket-client";
 import { SOCKET_EVENTS, type PatientData } from "@/lib/types";
 import FormField from "@/components/patient/FormField";
 
-const inputClass = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500";
+const inputClass = "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500";
 
 export default function PatientEditForm({
   sessionId,
@@ -106,14 +106,14 @@ export default function PatientEditForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
         >
           บันทึกการแก้ไข
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
         >
           ยกเลิก
         </button>

@@ -19,7 +19,7 @@ const INACTIVITY_MS = 10000;
 const DEBOUNCE_MS = 300;
 
 const inputClass =
-  "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500";
+  "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500";
 
 export default function PatientForm({ sessionId }: { sessionId: string }) {
   const router = useRouter();
@@ -124,11 +124,11 @@ export default function PatientForm({ sessionId }: { sessionId: string }) {
             <button
               type="button"
               onClick={startNewPatient}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
               เริ่มฟอร์มผู้ป่วยรายใหม่
             </button>
-            <Link href="/" className="text-sm text-blue-600 hover:underline">
+            <Link href="/" className="text-sm text-blue-600 transition-colors hover:underline">
               ← กลับหน้าแรก
             </Link>
           </div>
@@ -140,7 +140,7 @@ export default function PatientForm({ sessionId }: { sessionId: string }) {
   return (
     <main className="flex-1 p-4 sm:p-8">
       <div className="mx-auto max-w-3xl">
-        <Link href="/" className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+        <Link href="/" className="inline-flex items-center gap-1 text-sm text-blue-600 transition-colors hover:underline">
           ← กลับหน้าแรก
         </Link>
       </div>
@@ -214,7 +214,7 @@ export default function PatientForm({ sessionId }: { sessionId: string }) {
 
         <button
           type="submit"
-          className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+          className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
         >
           ส่งข้อมูล
         </button>
