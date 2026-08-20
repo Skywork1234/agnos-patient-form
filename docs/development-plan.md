@@ -11,22 +11,23 @@ agnos-patient-form/
     page.tsx                       # Landing page: pick a role (patient / staff)
     patient/page.tsx               # Auto-create-or-resume a patient session, redirects to /patient/[sessionId]
     patient/[sessionId]/page.tsx   # Server component: awaits `sessionId` param, renders PatientForm
-    staff/page.tsx                 # Staff Dashboard: live list of all active/recent sessions
+    staff/page.tsx                 # Staff Dashboard: live list of all active/recent sessions, with name search, status filter tabs, and per-row Edit/Delete
     staff/[sessionId]/page.tsx     # Server component: awaits `sessionId` param, renders StaffPanel
   components/
     patient/
       PatientForm.tsx              # The patient intake form (client component)
       FormField.tsx                # Generic labeled-field wrapper (label + error message)
     staff/
-      StaffPanel.tsx                # Read-only live view of a single session's data (client component)
-      StatusBadge.tsx                # Presence/status pill (waiting/filling/inactive/submitted)
+      StaffPanel.tsx                # Live view of a single session's data; read-only <dl>, or an edit form when isEditing (client component)
+      PatientEditForm.tsx           # Staff-side edit form for an existing session's data (client component)
+      StatusBadge.tsx                # Presence/status pill (waiting/filling/inactive/submitted); exports CONFIG (reused by the staff filter tabs)
   lib/
-    types.ts                       # Shared types: PatientData, SessionState, SessionSummary, socket event names/payloads
+    types.ts                       # Shared types: PatientData, SessionState, SessionSummary, socket event names/payloads (incl. STAFF_UPDATE/STAFF_DELETE)
     schema.ts                      # zod schema + defaults for the patient form
     socket-client.ts               # Client-side Socket.io singleton
     session-storage.ts             # localStorage key for "my in-progress patient session"
   server/
-    session-store.ts               # In-memory session store (Map<sessionId, SessionState>) + listSessions()
+    session-store.ts               # In-memory session store (Map<sessionId, SessionState>): getSession/ensureSession/updateSession/updateSessionData/deleteSession/listSessions()
   docs/
     development-plan.md            # This file
   render.yaml                      # Render deploy config
@@ -49,6 +50,30 @@ agnos-patient-form/
 - **Minimal, single accent color** (blue) for primary actions, neutral
   slate palette for everything else, so the form doesn't compete visually
   with the data staff need to read.
+- **Blue-white theme** — a single centralized change (`--background` in
+  `globals.css`, `slate-50` → `blue-50`) rather than touching every
+  component's colors individually. Every page inherits this via `body`
+  with no per-page override, and every card surface is already `bg-white`,
+  so one variable produces a consistent pale-blue-canvas/white-card look
+  app-wide. Foreground text stays `slate-900` (unchanged) to preserve
+  contrast/readability rather than risk legibility for a decorative pass.
+  Buttons/links/hover states already used `blue-600`/`blue-300` as the
+  app's sole accent before this change, so the new background reads as an
+  extension of the existing palette, not a new hue.
+- **Edit lives on the detail page, not inline in the list row.** The list's
+  "แก้ไข" button navigates to `/staff/[sessionId]?edit=1` (detail page opens
+  directly into edit mode) rather than cramming a 13-field form into a list
+  row. This keeps the list scannable/scoped to triage (browse, search,
+  filter, delete) while the detail page stays the place to inspect/edit one
+  record in full.
+- **Delete requires a native `confirm()` before firing.** No modal library
+  exists in this codebase, and a destructive, irreversible, no-undo action
+  (in-memory store, no soft-delete) warrants a synchronous blocking
+  confirmation rather than an easy-to-misclick single button.
+- **Search + status filter are pure client-side state**, filtering the
+  `SessionSummary[]` already delivered via `lobby:sync` — no new socket
+  events or server round-trips needed, since the full list is already on
+  the client.
 
 ## Component Architecture
 
@@ -89,27 +114,61 @@ agnos-patient-form/
   repeating label/error markup per field.
 - **`app/staff/page.tsx` (Staff Dashboard)** — client component. On mount it
   emits `lobby:join` and subscribes to `lobby:sync`, which the server sends
-  once immediately and again on every patient join/update/submit anywhere.
-  Renders one row per session (`displayName`, relative "last updated" time,
-  `StatusBadge`), each linking to `/staff/<sessionId>` for the full detail
-  view. This is the page that replaced manual session-ID hand-off — staff
-  never type or paste an ID.
+  once immediately and again on every patient join/update/submit/staff
+  edit/staff delete anywhere. Renders one row per session (`displayName`,
+  relative "last updated" time, `StatusBadge`), each linking to
+  `/staff/<sessionId>` for the full detail view. This is the page that
+  replaced manual session-ID hand-off — staff never type or paste an ID.
+  Also holds two pieces of purely client-side filter state: a name `search`
+  string and a `statusFilter` (one of the `DisplayStatus` values or `"all"`,
+  with per-tab counts derived from the already-loaded session list) — both
+  combine via a single `.filter()` over `sessions`, no server round-trip.
+  Each row also has "แก้ไข" (→ `/staff/<sessionId>?edit=1`) and "ลบ" buttons;
+  delete confirms via `window.confirm()` then emits `staff:delete`.
 - **`components/staff/StaffPanel.tsx`** (used by `/staff/[sessionId]`) —
-  client component, unchanged in its sync logic from v1. On mount it emits
-  `session:join` with `role: "staff"` and subscribes to `staff:sync`, which
-  the server sends once immediately (current state) and again on every
-  subsequent patient update for that one session. Derives a `"waiting"`
-  pseudo-status client-side when no field has been filled yet. Has a
-  "← กลับไปรายชื่อผู้ป่วย" link back to the dashboard.
+  client component. On mount it emits `session:join` with `role: "staff"`
+  and subscribes to `staff:sync`, which the server sends once immediately
+  (current state) and again on every subsequent patient update *or staff
+  edit/delete* for that one session. Derives a `"waiting"` pseudo-status
+  client-side when no field has been filled yet. Reads the `?edit=1` query
+  param (`useSearchParams`) to decide whether to open directly into edit
+  mode. Toggles between the original read-only `<dl>` and
+  `<PatientEditForm>` based on local `isEditing` state; a `hasSyncedOnce`
+  ref distinguishes the *first* `staff:sync` (from the initial join — must
+  not cancel an `?edit=1`-triggered edit mode) from a *later* one (the
+  round-trip confirmation after a `staff:update` save, which *should* flip
+  back to read-only). If `staff:sync` ever delivers `null` (this session was
+  deleted, possibly from another staff tab), it redirects to `/staff`. Has a
+  "← กลับไปรายชื่อผู้ป่วย" link back to the dashboard, plus its own
+  "แก้ไขข้อมูล"/"ลบ" buttons (same behavior as the list row's).
+- **`components/staff/PatientEditForm.tsx`** — client component, staff-side
+  counterpart to `PatientForm.tsx`. Same `react-hook-form` +
+  `zodResolver(patientFormSchema)` setup and the same field markup/labels
+  (so it looks identical to the patient-facing form), but with none of
+  `PatientForm`'s live-sync side effects (no debounce, no inactivity timer,
+  no `patient:update`/`patient:submit`). On submit it emits `staff:update`
+  with `{ sessionId, data }` and does nothing else locally — the parent
+  (`StaffPanel`) leaves edit mode only once the server's `staff:sync`
+  confirms the write, so there's a single source of truth instead of
+  optimistic local state that could drift from what actually got saved.
 - **`components/staff/StatusBadge.tsx`** — pure presentational component
   mapping a `DisplayStatus` (`lib/types.ts`) to a label + color/pulse; reused
-  by both the dashboard rows and the single-session detail view.
+  by both the dashboard rows and the single-session detail view. Its
+  `CONFIG` map is exported and reused by `app/staff/page.tsx` to build the
+  status filter tabs, so the wording stays identical between the badges and
+  the filter labels instead of drifting.
 - **`server.ts`** — the only non-Next entry point. Wraps Next's request
   handler in a plain `http.Server`, attaches `socket.io` to it, and wires up
-  the server-side event handlers (join / lobby-join / update / submit)
-  against `server/session-store.ts`. A patient's `session:join` both
-  registers the session (so it shows up on the dashboard immediately, even
-  before the first keystroke) and re-broadcasts the lobby list.
+  the server-side event handlers (join / lobby-join / update / submit /
+  staff-update / staff-delete) against `server/session-store.ts`. A
+  patient's `session:join` both registers the session (so it shows up on
+  the dashboard immediately, even before the first keystroke) and
+  re-broadcasts the lobby list. `staff:update` calls `updateSessionData`
+  (preserves status) and re-emits `staff:sync` to the whole `sessionId` room
+  (via `io.to`, not `socket.to`, so the editing staff client itself also
+  gets the confirmed sync). `staff:delete` calls `deleteSession`, emits
+  `staff:sync` with `null` to the `sessionId` room (signals "this session is
+  gone" to `StaffPanel`), and re-broadcasts the lobby list.
 - **`server/session-store.ts`** — a plain `Map` keyed by `sessionId`. No
   database: the assignment doesn't call for persistence across server
   restarts, and an in-memory store keeps the real-time path simple (no
@@ -117,7 +176,11 @@ agnos-patient-form/
   row's `displayName` (from `firstName`/`lastName`, or a placeholder) and a
   display status (`"waiting"` when no field has data yet, else the raw
   status), sorted filling → inactive → waiting → submitted, most-recent
-  first within each group.
+  first within each group. `updateSessionData(id, data)` differs from
+  `updateSession(id, data, status)` by deliberately *not* touching the
+  existing `status` — used for staff edits so correcting a submitted
+  record's typo doesn't flip its dashboard status back to "filling".
+  `deleteSession(id)` removes the entry outright (`sessions.delete`).
 
 ### Why the landing page changed
 
@@ -169,6 +232,23 @@ Dashboard). A given socket can be in both at once.
 7. State lives only in server memory for the lifetime of the process — a
    server restart clears in-flight sessions, which is an accepted
    trade-off for this assignment's scope (no persistence requirement).
+8. **Staff-initiated edits and deletes flow the same two rooms, in reverse
+   direction** (staff → patient/other-staff, instead of patient → staff).
+   From `PatientEditForm` (inside `StaffPanel`), saving emits `staff:update`
+   with `{ sessionId, data }` (no `status` — the server preserves whatever
+   status was already there). The server writes it via
+   `updateSessionData`, then emits `staff:sync` to the whole `sessionId`
+   room (so the editing staff client's own `StaffPanel` sees the
+   confirmed save and exits edit mode — not an optimistic local update) and
+   re-broadcasts `lobby:sync` (so the list's name/status/"last updated"
+   stay current for every open dashboard).
+9. **Delete** emits `staff:delete` with `{ sessionId }` from either the list
+   row or the detail view (after a `window.confirm()`). The server calls
+   `deleteSession`, emits `staff:sync` with `null` to the `sessionId` room
+   — `StaffPanel` treats a `null` sync as unambiguous ("this session no
+   longer exists," since a normal join/edit sync is never `null`) and
+   `router.push("/staff")`s away — and re-broadcasts `lobby:sync` so the row
+   disappears from every open dashboard.
 
 ## Testing Performed
 

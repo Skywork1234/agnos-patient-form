@@ -92,6 +92,24 @@ copying required.
 - **Inactivity detection** (not just filling/submitted) — the Staff View can
   tell the difference between "patient is actively typing" and "patient
   opened the form but stepped away."
+- **Edit patient data from Staff View** — staff can correct a patient's
+  submitted data (e.g. a mistyped phone number) via an "แก้ไขข้อมูล" button on
+  the detail view, or "แก้ไข" directly from the list row. Reuses the same
+  form fields/validation as the patient-facing form, but through a dedicated
+  `staff:update` socket event that preserves the record's status (an edit
+  doesn't flip a "submitted" record back to "filling").
+- **Delete a session** — staff can remove a patient record entirely (list row
+  or detail view), with a confirm prompt since it's irreversible. Anyone
+  viewing that session's detail page at the time is redirected back to the
+  list automatically.
+- **Search + status filter on the Staff Dashboard** — a live search box
+  filters the list by patient name as you type, and a row of status tabs
+  (ทั้งหมด/รอผู้ป่วยเริ่มกรอก/กำลังกรอกข้อมูล/ไม่มีการเคลื่อนไหว/ส่งข้อมูลแล้ว,
+  each with a live count) narrows the list by presence state — both apply
+  together, entirely client-side against the already-synced session list.
+- **Blue-white visual theme** — a light-blue page background (Tailwind
+  `blue-50`) with white content cards, plus smoother hover/transition
+  states on buttons, links, and cards throughout.
 
 ## Deployment
 
